@@ -3,13 +3,19 @@ package io.github.kraused53.Engine;
 import io.github.kraused53.Map.Map;
 import io.github.kraused53.Panel.Panel;
 import io.github.kraused53.Player.Player;
+import io.github.kraused53.RayCast.RayCast;
+import io.github.kraused53.Wall.Wall;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Objects;
 
 import static java.lang.Math.*;
 
@@ -21,11 +27,13 @@ public class Engine implements KeyListener {
     private final JFrame screen;
 
     // Engine settings
-    boolean running;
-    int miniMapScale = 20;
+    private boolean running;
 
     // Map
     private final Map map;
+
+    // Walls
+    private final Wall[] walls;
 
     // Player
     private final Player player;
@@ -40,7 +48,28 @@ public class Engine implements KeyListener {
     private static final int FPS = 120;
     private static final double FIXED_DT = 1.0 / FPS;
 
+    private final BufferedImage[] textures;
+
     public Engine( int screenWidth, int screenHeight ) {
+        textures = new BufferedImage[8];
+        try{
+            textures[0] = ImageIO.read( Objects.requireNonNull(getClass().getResource( "/textures/redbrick.png" ) ) );
+            textures[1] = ImageIO.read( Objects.requireNonNull(getClass().getResource( "/textures/eagle.png" ) ) );
+            textures[2] = ImageIO.read( Objects.requireNonNull(getClass().getResource( "/textures/colorstone.png" ) ) );
+            textures[3] = ImageIO.read( Objects.requireNonNull(getClass().getResource( "/textures/bluestone.png" ) ) );
+            textures[4] = ImageIO.read( Objects.requireNonNull(getClass().getResource( "/textures/greystone.png" ) ) );
+            textures[5] = ImageIO.read( Objects.requireNonNull(getClass().getResource( "/textures/mossy.png" ) ) );
+            textures[6] = ImageIO.read( Objects.requireNonNull(getClass().getResource( "/textures/wood.png" ) ) );
+        } catch ( IOException e ) {
+            throw new RuntimeException( e );
+        }
+
+        // Each pixel across the map will get one wall slice
+        walls = new Wall[ screenWidth ];
+        for ( int index = 0; index < screenWidth; index++ ) {
+            walls[ index ] = new Wall();
+        }
+
         this.map = new Map();
         this.player = new Player(
                 ( float ) map.getMapWidth()  / 2,
@@ -53,7 +82,7 @@ public class Engine implements KeyListener {
         this.screenHeight = screenHeight;
 
         screen = new JFrame( "Ray-Caster!" );
-        Panel panel = new Panel( this );
+        Panel panel = new Panel( walls, screenWidth, screenHeight, textures );
         panel.setPreferredSize( new Dimension( this.screenWidth, this.screenHeight ) );
         panel.setBackground( Color.BLACK );
 
@@ -72,12 +101,13 @@ public class Engine implements KeyListener {
                 }
         );
 
-        screen.setContentPane( new Panel( this ) );
+        //screen.setContentPane( new Panel() );
         screen.setVisible( true );
 
         running = false;
 
         screen.addKeyListener(this);
+
     }
 
     private void exitFrame(JFrame frame) {
@@ -133,12 +163,12 @@ public class Engine implements KeyListener {
 
         // Rotate player
         if( rotRight ) {
-            player.rotateLeft( rotSpeed );
-        } else if ( rotLeft ) {
             player.rotateRight( rotSpeed );
+        } else if ( rotLeft ) {
+            player.rotateLeft( rotSpeed );
         }
 
-
+        RayCast.rayCast( walls, player, screenWidth, screenHeight, map );
     }
 
     private void render() {
@@ -165,19 +195,4 @@ public class Engine implements KeyListener {
         }
     }
     @Override public void keyTyped(KeyEvent e) {}
-
-    // Getters
-    public int getH() { return this.screenHeight; }
-    public int getW() { return this.screenWidth; }
-    public int getMapWidth() { return map.getMapWidth(); }
-    public int getMapHeight() { return map.getMapHeight(); }
-    public int getMapScale() { return miniMapScale; }
-    public int mapGet( int x, int y ) { return map.get( x, y ); }
-    public float getPlayerX() { return player.getX(); }
-    public float getPlayerY() { return player.getY(); }
-    public float getPlayerDirX() { return player.getDirX(); }
-    public float getPlayerDirY() { return player.getDirY(); }
-    public float getPlayerPlnX() { return player.getPlaneX(); }
-    public float getPlayerPlnY() { return player.getPlaneY(); }
-    public int mapToScreen( float data ) { return ( int ) ( data * miniMapScale ); }
 }

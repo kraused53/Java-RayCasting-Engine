@@ -16,16 +16,6 @@ public class Player extends Entity {
     private float oldDirX;
     private float oldPlaneX;
 
-    // Size
-    private float width;
-    private float height;
-
-    // Movement
-    private int walk_direction;
-    private int turn_direction;
-    private float walk_speed;
-    private float rotation_speed;
-
     public Player( float x, float y, float dirX, float dirY, float planeX, float planeY ) {
         super( x, y );
         this.dirX = dirX;
@@ -46,7 +36,7 @@ public class Player extends Entity {
         dirY /= len;
     }
 
-    public void rotateLeft( float speed ) {
+    public void rotateRight( float speed ) {
         // Rotate Direction vector
         oldDirX = dirX;
         dirX = (float) (dirX * cos(speed) - dirY * sin(speed));
@@ -60,7 +50,7 @@ public class Player extends Entity {
         normalize();
     }
 
-    public void rotateRight( float speed ) {
+    public void rotateLeft( float speed ) {
         // Rotate Direction vector
         oldDirX = dirX;
         dirX = (float) (dirX * cos(-speed) - dirY * sin(-speed));
